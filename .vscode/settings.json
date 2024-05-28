@@ -3,6 +3,8 @@
     "rust-analyzer.files.excludeDirs": [
         ".direnv"
     ],
+    "nix.enableLanguageServer": true,
+    "nix.serverPath": "nixd"
     // https://twitter.com/sridca/status/1674947342607216641
     // "editor.inlayHints.enabled": "offUnlessPressed",
 }
