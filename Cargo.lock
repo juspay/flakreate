@@ -370,6 +370,9 @@ dependencies = [
  "clap",
  "inquire",
  "nix_rs",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
