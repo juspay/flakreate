@@ -38,10 +38,10 @@
         };
 
         devShells.default = pkgs.mkShell {
-          inputsFrom = [ self'.devShells.rust-nix-template ];
+          inputsFrom = [ self'.devShells.flakreate ];
           packages = [ pkgs.cargo-watch ];
         };
-        packages.default = self'.packages.rust-nix-template;
+        packages.default = self'.packages.flakreate;
       };
     };
 }
