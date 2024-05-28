@@ -23,8 +23,9 @@ struct Template {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Param {
-    description: String,
+    help: String,
     default: Option<String>,
+    placeholder: Option<String>,
     exec: String,
 }
 
@@ -48,21 +49,39 @@ async fn main() -> anyhow::Result<()> {
     };
     let url: FlakeUrl = format!("{}#templates", registry).into();
 
-    // TODO Read flake-parts/templates and eval it to JSON, then Rust types
+    // Read flake-parts/templates and eval it to JSON, then Rust types
     let templates =
         nix_rs::flake::eval::nix_eval_attr_json::<BTreeMap<String, Template>>(&cmd, &url, false)
             .await?;
     let names = templates.keys().collect::<Vec<_>>();
 
+    // Let the user pick the template
     let template = Select::new("Select a template", names)
         .with_help_message("Choose a flake template to use")
         .prompt()?;
 
-    // println!("Templates: {:#?}", templates);
-    println!("Selected template: {:#?}", templates.get(template).unwrap());
+    // Prompt for template parameters
+    let param_values = templates
+        .get(template)
+        .unwrap()
+        .params
+        .iter()
+        .map(|(name, param)| {
+            let default = param.default.as_deref().unwrap_or("");
+            let placeholder = param.placeholder.as_deref().unwrap_or("");
+            let value = Text::new(name)
+                .with_help_message(&param.help)
+                .with_placeholder(placeholder)
+                .with_default(default)
+                .prompt()?;
+            Ok((name.clone(), value))
+        })
+        .collect::<anyhow::Result<BTreeMap<String, String>>>()?;
 
-    // TODO Prompt to select a template to use
-    // TODO Prompt for the parameter values of the template
-    // TODO Run `nix flake init ...`, followed by the param patches
+    // println!("Templates: {:#?}", templates);
+    println!("Res: {:#?}", param_values);
+
+    // TODO Run `nix flake init ...`,
+    // TODO Exec prompt 'exec's
     Ok(())
 }
