@@ -52,10 +52,17 @@ impl Template {
     ) -> Result<BTreeMap<String, Self>, NixCmdError> {
         nix_rs::flake::eval::nix_eval_attr_json::<BTreeMap<String, Template>>(
             nixcmd().await,
-            &url,
+            url,
             false,
         )
         .await
+    }
+
+    pub fn prompt_values(&self) -> anyhow::Result<BTreeMap<String, String>> {
+        self.params
+            .iter()
+            .map(|(name, param)| Ok((name.clone(), param.prompt_value()?)))
+            .collect()
     }
 }
 
@@ -97,13 +104,7 @@ async fn main() -> anyhow::Result<()> {
         .prompt()?;
 
     // Prompt for template parameters
-    let param_values = templates
-        .get(template)
-        .unwrap()
-        .params
-        .iter()
-        .map(|(name, param)| Ok((name.clone(), param.prompt_value()?)))
-        .collect::<anyhow::Result<BTreeMap<String, String>>>()?;
+    let param_values = templates.get(template).unwrap().prompt_values()?;
 
     // println!("Templates: {:#?}", templates);
     println!("Res: {:#?}", param_values);
