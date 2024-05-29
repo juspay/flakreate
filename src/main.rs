@@ -40,6 +40,7 @@ struct Template {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Param {
+    name: String,
     help: String,
     default: Option<String>,
     placeholder: Option<String>,
@@ -68,7 +69,7 @@ impl Template {
 
 impl Param {
     pub fn prompt_value(&self) -> anyhow::Result<String> {
-        let value = Text::new("Value")
+        let value = Text::new(&self.name)
             .with_help_message(&self.help)
             .with_placeholder(self.placeholder.as_deref().unwrap_or(""))
             .with_default(self.default.as_deref().unwrap_or(""))
