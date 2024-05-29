@@ -54,8 +54,6 @@ struct Param {
     /// Whether the user must provide a value
     #[serde(default)]
     required: bool,
-
-    exec: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
