@@ -71,7 +71,7 @@ struct Replace {
 }
 
 impl Replace {
-    pub async fn apply(&self) -> anyhow::Result<()> {
+    pub async fn _apply(&self) -> anyhow::Result<()> {
         // TODO: Refactor the LLM generated code below
         for file in &self.files {
             let content = tokio::fs::read_to_string(file).await?;
@@ -114,29 +114,26 @@ impl Template {
     pub fn prompt_values(&self) -> anyhow::Result<BTreeMap<String, Replace>> {
         self.params
             .iter()
-            .map(|(name, param)| {
-                let to = param.prompt_value()?;
-                let from = param.default.clone();
-                let replace = Replace {
-                    name: name.clone(),
-                    from,
-                    to,
-                    files: param.files.clone(),
-                };
-                Ok((name.clone(), replace))
-            })
+            .map(|(name, param)| Ok((name.clone(), param.prompt_value()?)))
             .collect()
     }
 }
 
 impl Param {
-    pub fn prompt_value(&self) -> anyhow::Result<String> {
-        let value = Text::new(&self.name)
+    pub fn prompt_value(&self) -> anyhow::Result<Replace> {
+        let to = Text::new(&self.name)
             .with_help_message(&self.help)
             .with_placeholder(self.placeholder.as_deref().unwrap_or(""))
             .with_default(&self.default)
             .prompt()?;
-        Ok(value)
+        let from = self.default.clone();
+        let replace = Replace {
+            name: self.name.clone(),
+            from,
+            to,
+            files: self.files.clone(),
+        };
+        Ok(replace)
     }
 }
 
