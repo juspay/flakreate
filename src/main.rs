@@ -71,7 +71,7 @@ struct Replace {
 }
 
 impl Replace {
-    pub async fn _apply(&self) -> anyhow::Result<()> {
+    pub async fn apply(&self) -> anyhow::Result<()> {
         // TODO: Refactor the LLM generated code below
         for file in &self.files {
             let content = tokio::fs::read_to_string(file).await?;
@@ -133,6 +133,7 @@ impl Param {
             to,
             files: self.files.clone(),
         };
+        // TODO: return nothing if from == to
         Ok(replace)
     }
 }
@@ -163,13 +164,34 @@ async fn main() -> anyhow::Result<()> {
         .with_help_message("Choose a flake template to use")
         .prompt()?;
 
+    let path = Text::new("Directory path")
+        .with_help_message("Path to create the flake in")
+        .with_placeholder("Filepath")
+        .with_default("./tmp")
+        .prompt()?;
+
     // Prompt for template parameters
     let param_values = templates.get(template).unwrap().prompt_values()?;
 
     // println!("Templates: {:#?}", templates);
     println!("Res: {:#?}", param_values);
 
-    // TODO Run `nix flake init ...`,
-    // TODO Exec prompt 'exec's
+    // Create directory path
+    tokio::fs::create_dir_all(&path).await?;
+    // change working directory to 'path'
+    std::env::set_current_dir(&path)?;
+
+    // Run nix flake init
+    let template_url = format!("{}#{}", registry, template);
+    println!("Running: nix flake init -t {}", template_url);
+    nixcmd()
+        .await
+        .run_with_args_returning_stdout(&["flake", "init", "-t", &template_url])
+        .await?;
+
+    // Do the actual replacement
+    for replace in param_values.values() {
+        replace.apply().await?;
+    }
     Ok(())
 }

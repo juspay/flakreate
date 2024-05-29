@@ -7,7 +7,7 @@ fmt:
 
 # Run 'cargo run' on the project
 run *ARGS:
-    cargo run {{ARGS}}
+    rm -rf ./tmp && cargo run {{ARGS}}
 
 # Run 'cargo watch' to run the project (auto-recompiles)
 watch *ARGS:
