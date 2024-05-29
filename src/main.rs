@@ -40,10 +40,19 @@ struct Template {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct Param {
+    /// Main message when prompting the user for input
     name: String,
+    /// Message displayed at the line below the prompt.
     help: String,
-    default: Option<String>,
+    /// The default value used in the template files, that must be replaced by
+    /// the user provided value (if it is different)
+    default: String,
+    /// Short hint that describes the expected value of the input.
     placeholder: Option<String>,
+    /// Whether the user must provide a value
+    #[serde(default)]
+    required: bool,
+
     exec: String,
 }
 
@@ -72,7 +81,7 @@ impl Param {
         let value = Text::new(&self.name)
             .with_help_message(&self.help)
             .with_placeholder(self.placeholder.as_deref().unwrap_or(""))
-            .with_default(self.default.as_deref().unwrap_or(""))
+            .with_default(&self.default)
             .prompt()?;
         Ok(value)
     }
