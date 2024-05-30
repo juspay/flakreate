@@ -1,5 +1,8 @@
 use clap::Parser;
-use flakreate::{flake_template, nixcmd};
+use flakreate::{
+    flake_template::{self, fileop::FileOp},
+    nixcmd,
+};
 use inquire::{Select, Text};
 use nix_rs::flake::url::FlakeUrl;
 
@@ -65,7 +68,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Do the actual replacement
     for replace in param_values.values() {
-        replace.apply().await?;
+        FileOp::apply(replace).await?;
     }
     Ok(())
 }

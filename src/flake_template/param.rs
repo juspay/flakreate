@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use inquire::Text;
 use serde::{Deserialize, Serialize};
 
-use super::replace::{Replace, ReplaceOp};
+use super::fileop::FileOp;
 
 /// A parameter to be filled in by the user in a nix flake template path.
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -27,20 +27,15 @@ pub struct Param {
 impl Param {
     /// Prompt the user for a value for this parameter.
     ///
-    /// Return a [`Replace`] that knows how to apply the replacement.
-    pub fn prompt_value(&self) -> anyhow::Result<Replace> {
+    /// Return a [`FileOp`] that knows how to apply the replacement.
+    pub fn prompt_value(&self) -> anyhow::Result<Vec<FileOp>> {
         let to = Text::new(&self.name)
             .with_help_message(&self.help)
             .with_placeholder(self.placeholder.as_deref().unwrap_or(""))
             .with_default(&self.default)
             .prompt()?;
         let from = self.default.clone();
-        let replace = Replace {
-            name: self.name.clone(),
-            from: from.clone(),
-            to: to.clone(),
-            ops: ReplaceOp::ops_for_replacing(&from, &to, &self.files),
-        };
+        let replace = FileOp::ops_for_replacing(&from, &to, &self.files);
         // TODO: return nothing if from == to
         Ok(replace)
     }

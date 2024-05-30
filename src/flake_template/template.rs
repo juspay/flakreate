@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
-use super::{param::Param, replace::Replace};
+use super::{fileop::FileOp, param::Param};
 
 /// A Nix flake template
 ///
@@ -15,7 +15,7 @@ pub struct Template {
 }
 
 impl Template {
-    pub fn prompt_replacements(&self) -> anyhow::Result<BTreeMap<String, Replace>> {
+    pub fn prompt_replacements(&self) -> anyhow::Result<BTreeMap<String, Vec<FileOp>>> {
         self.params
             .iter()
             .map(|(name, param)| Ok((name.clone(), param.prompt_value()?)))
