@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use inquire::Text;
 use serde::{Deserialize, Serialize};
 
-use super::replace::Replace;
+use super::replace::{Replace, ReplaceOp};
 
 /// A parameter to be filled in by the user in a nix flake template path.
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -37,9 +37,9 @@ impl Param {
         let from = self.default.clone();
         let replace = Replace {
             name: self.name.clone(),
-            from,
-            to,
-            files: self.files.clone(),
+            from: from.clone(),
+            to: to.clone(),
+            ops: ReplaceOp::ops_for_replacing(&from, &to, &self.files),
         };
         // TODO: return nothing if from == to
         Ok(replace)

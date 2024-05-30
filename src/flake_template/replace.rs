@@ -12,34 +12,66 @@ pub struct Replace {
     ///
     /// Replacements happen on file *content* as well as file *name*. When the
     /// later happens, the file is naturally renamed.
-    pub files: Vec<PathBuf>,
+    pub ops: Vec<ReplaceOp>,
 }
 
 impl Replace {
     pub async fn apply(&self) -> anyhow::Result<()> {
         // TODO: Refactor the LLM generated code below
-        for file in &self.files {
-            let content = tokio::fs::read_to_string(file).await?;
-            let content = content.replace(&self.from, &self.to);
-            println!("REPLACE[{}]: {}", self.name, file.display());
-            tokio::fs::write(file, content).await?;
-            // Now, rename the file if filename contains 'from' as substring
-            if file.to_string_lossy().contains(&self.from) {
-                let new_file = file.with_file_name(
-                    file.file_name()
-                        .unwrap()
-                        .to_string_lossy()
-                        .replace(&self.from, &self.to),
-                );
-                println!(
-                    "RENAME[{}]: {} -> {}",
-                    self.name,
-                    file.display(),
-                    new_file.display()
-                );
-                tokio::fs::rename(file, new_file).await?;
+        for op in &self.ops {
+            match op {
+                ReplaceOp::ContentReplace(file, from, to) => {
+                    let content = tokio::fs::read_to_string(file).await?;
+                    let content = content.replace(from, to);
+                    println!(
+                        "REPLACE[{}]: {} : {} -> {}",
+                        self.name,
+                        file.display(),
+                        from,
+                        to
+                    );
+                    tokio::fs::write(file, content).await?;
+                }
+                ReplaceOp::FileRename(file, new_name) => {
+                    println!("RENAME[{}]: {} -> {}", self.name, file.display(), new_name);
+                    tokio::fs::rename(file, new_name).await?;
+                }
             }
         }
         Ok(())
+    }
+}
+
+/// FIXME: Don't need [`Replace`] when this is sufficient!
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum ReplaceOp {
+    /// Replace all occurrences of `from` with `to` in the file content
+    ContentReplace(PathBuf, String, String),
+    /// Rename the file to the given name
+    FileRename(PathBuf, String),
+}
+
+impl ReplaceOp {
+    pub fn ops_for_replacing(from: &str, to: &str, files: &[PathBuf]) -> Vec<ReplaceOp> {
+        files
+            .iter()
+            .flat_map(|file| {
+                let mut items: Vec<ReplaceOp> = vec![];
+                if to != from {
+                    items.push(ReplaceOp::ContentReplace(
+                        file.clone(),
+                        from.to_string(),
+                        to.to_string(),
+                    ));
+                    if file.to_string_lossy().contains(from) {
+                        items.push(ReplaceOp::FileRename(
+                            file.clone(),
+                            file.to_string_lossy().replace(from, to),
+                        ))
+                    }
+                }
+                items
+            })
+            .collect()
     }
 }
