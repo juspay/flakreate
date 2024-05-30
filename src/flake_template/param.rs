@@ -1,10 +1,9 @@
-use std::{collections::BTreeMap, path::PathBuf};
+use std::path::PathBuf;
 
 use inquire::Text;
-use nix_rs::{command::NixCmdError, flake::url::FlakeUrl};
 use serde::{Deserialize, Serialize};
 
-use crate::nixcmd;
+use super::replace::Replace;
 
 /// A parameter to be filled in by the user in a nix flake template path.
 #[derive(Debug, Serialize, Deserialize, Clone)]

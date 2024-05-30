@@ -1,22 +1,18 @@
-use std::{collections::BTreeMap, path::PathBuf};
+use std::path::PathBuf;
 
-use inquire::Text;
-use nix_rs::{command::NixCmdError, flake::url::FlakeUrl};
 use serde::{Deserialize, Serialize};
-
-use crate::nixcmd;
 
 /// Replacement semantics for a [`Param`]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Replace {
-    name: String,
-    from: String,
-    to: String,
+    pub name: String,
+    pub from: String,
+    pub to: String,
     /// The files to do replacement on.
     ///
     /// Replacements happen on file *content* as well as file *name*. When the
     /// later happens, the file is naturally renamed.
-    files: Vec<PathBuf>,
+    pub files: Vec<PathBuf>,
 }
 
 impl Replace {
