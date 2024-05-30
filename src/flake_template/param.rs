@@ -25,6 +25,9 @@ pub struct Param {
 }
 
 impl Param {
+    /// Prompt the user for a value for this parameter.
+    ///
+    /// Return a [`Replace`] that knows how to apply the replacement.
     pub fn prompt_value(&self) -> anyhow::Result<Replace> {
         let to = Text::new(&self.name)
             .with_help_message(&self.help)

@@ -1,9 +1,6 @@
 use std::collections::BTreeMap;
 
-use nix_rs::{command::NixCmdError, flake::url::FlakeUrl};
 use serde::{Deserialize, Serialize};
-
-use crate::nixcmd;
 
 use super::{param::Param, replace::Replace};
 
@@ -18,17 +15,6 @@ pub struct Template {
 }
 
 impl Template {
-    pub async fn fetch_flake_templates(
-        url: &FlakeUrl,
-    ) -> Result<BTreeMap<String, Self>, NixCmdError> {
-        nix_rs::flake::eval::nix_eval_attr_json::<BTreeMap<String, Template>>(
-            nixcmd().await,
-            url,
-            false,
-        )
-        .await
-    }
-
     pub fn prompt_replacements(&self) -> anyhow::Result<BTreeMap<String, Replace>> {
         self.params
             .iter()

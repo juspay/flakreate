@@ -1,5 +1,5 @@
 use clap::Parser;
-use flakreate::{flake_template::template::Template, nixcmd};
+use flakreate::{flake_template, nixcmd};
 use inquire::{Select, Text};
 use nix_rs::flake::url::FlakeUrl;
 
@@ -29,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
     let url: FlakeUrl = format!("{}#templates", registry).into();
 
     // Read flake-parts/templates and eval it to JSON, then Rust types
-    let templates = Template::fetch_flake_templates(&url).await?;
+    let templates = flake_template::fetch(&url).await?;
     // TODO: avoid duplicates (aliases)
     let names = templates.keys().collect::<Vec<_>>();
 
