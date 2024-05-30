@@ -1,5 +1,5 @@
 use clap::Parser;
-use flakreate::{nixcmd, template::Template};
+use flakreate::{flake_template::template::Template, nixcmd};
 use inquire::{Select, Text};
 use nix_rs::flake::url::FlakeUrl;
 
@@ -45,7 +45,7 @@ async fn main() -> anyhow::Result<()> {
         .prompt()?;
 
     // Prompt for template parameters
-    let param_values = templates.get(template).unwrap().prompt_values()?;
+    let param_values = templates.get(template).unwrap().prompt_replacements()?;
 
     // println!("Templates: {:#?}", templates);
     println!("Res: {:#?}", param_values);

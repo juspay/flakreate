@@ -1,7 +1,7 @@
 use nix_rs::command::NixCmd;
 use tokio::sync::OnceCell;
 
-pub mod template;
+pub mod flake_template;
 
 static NIXCMD: OnceCell<NixCmd> = OnceCell::const_new();
 
