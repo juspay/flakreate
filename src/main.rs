@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<()> {
         println!("DEBUG {args:?}");
     }
     println!("Welcome to flakreate! Let's create your flake template:");
-    let registry = Text::new("Template registry")
+    let registry = Text::new("FlakeTemplate registry")
         .with_help_message("Flake that contains a registry of templates to choose from")
         .with_placeholder("Flake URL reference")
         .with_default("github:flake-parts/templates/flakreate")

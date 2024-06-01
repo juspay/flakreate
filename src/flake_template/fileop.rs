@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
+/// An operation on a file part of the flake template
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum FileOp {
     /// Replace all occurrences of `from` with `to` in the file content
