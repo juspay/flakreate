@@ -47,11 +47,11 @@ impl FileOp {
                 FileOp::ContentReplace(file, from, to) => {
                     let content = tokio::fs::read_to_string(file).await?;
                     let content = content.replace(from, to);
-                    println!("REPLACE: {} : {} -> {}", file.display(), from, to);
+                    println!("  REPLACE: {} : {} -> {}", file.display(), from, to);
                     tokio::fs::write(file, content).await?;
                 }
                 FileOp::FileRename(file, new_name) => {
-                    println!("RENAME: {} -> {}", file.display(), new_name);
+                    println!("  RENAME: {} -> {}", file.display(), new_name);
                     tokio::fs::rename(file, new_name).await?;
                 }
             }

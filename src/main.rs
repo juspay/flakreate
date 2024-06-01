@@ -50,8 +50,7 @@ async fn main() -> anyhow::Result<()> {
     // Prompt for template parameters
     let param_values = templates.get(template).unwrap().prompt_replacements()?;
 
-    // println!("Templates: {:#?}", templates);
-    println!("Res: {:#?}", param_values);
+    // println!("Res: {:#?}", param_values);
 
     // Create directory path
     tokio::fs::create_dir_all(&path).await?;
@@ -60,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
 
     // Run nix flake init
     let template_url = format!("{}#{}", registry, template);
-    println!("Running: nix flake init -t {}", template_url);
+    println!("$ nix flake init -t {}", template_url);
     nixcmd()
         .await
         .run_with_args_returning_stdout(&["flake", "init", "-t", &template_url])

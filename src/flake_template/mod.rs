@@ -17,6 +17,8 @@ pub mod param;
 pub struct FlakeTemplate {
     description: String,
     path: String,
+    #[serde(rename = "welcomeText")]
+    welcome_text: Option<String>,
     params: BTreeMap<String, Param>,
 }
 
