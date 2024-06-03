@@ -638,9 +638,9 @@ dependencies = [
 
 [[package]]
 name = "nix_rs"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aaac3ae7302d82acade21e9ca26d7cb052fa9b713ec77985def9c6d19dbe63cc"
+checksum = "307095c0e9d772e043ba5dd7a20254b7e1f4ef2b1b369602acfae0a90b542138"
 dependencies = [
  "bytesize",
  "cfg-if",

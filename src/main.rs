@@ -26,14 +26,14 @@ async fn main() -> anyhow::Result<()> {
         println!("DEBUG {args:?}");
     }
 
-    let url: FlakeUrl = format!("{}#templates", args.registry).into();
+    let registry: FlakeUrl = format!("{}#templates", args.registry).into();
 
     // Read flake-parts/templates and eval it to JSON, then Rust types
     let term = console::Term::stdout();
-    term.write_line(format!("Loading registry {}...", args.registry).as_str())?;
-    let templates = flake_template::fetch(&url).await?;
+    term.write_line(format!("Loading registry {}...", registry).as_str())?;
+    let templates = flake_template::fetch(&registry).await?;
     term.clear_last_lines(1)?;
-    println!("Loaded registry {}", args.registry);
+    println!("Loaded registry {}", registry);
 
     // TODO: avoid duplicates (aliases)
     let names = templates.keys().collect::<Vec<_>>();
@@ -62,11 +62,11 @@ async fn main() -> anyhow::Result<()> {
     std::env::set_current_dir(&path)?;
 
     // Run nix flake init
-    let template_url = format!("{}#{}", args.registry, template);
+    let template_url = registry.with_attr(template);
     println!("$ nix flake init -t {}", template_url);
     nixcmd()
         .await
-        .run_with_args_returning_stdout(&["flake", "init", "-t", &template_url])
+        .run_with_args(&["flake", "init", "-t", &template_url.0])
         .await?;
 
     // Do the actual replacement
