@@ -13,6 +13,10 @@ struct Args {
     /// whether to be verbose
     #[arg(short = 'v')]
     verbose: bool,
+
+    /// Flake template registry to use
+    #[arg(short = 'r', default_value = "github:flake-parts/templates/flakreate")]
+    registry: String,
 }
 
 #[tokio::main]
@@ -21,20 +25,20 @@ async fn main() -> anyhow::Result<()> {
     if args.verbose {
         println!("DEBUG {args:?}");
     }
-    println!("Welcome to flakreate! Let's create your flake template:");
-    let registry = Text::new("FlakeTemplate registry")
-        .with_help_message("Flake that contains a registry of templates to choose from")
-        .with_placeholder("Flake URL reference")
-        .with_default("github:flake-parts/templates/flakreate")
-        .prompt()?;
-    println!("Using {}!", registry);
 
-    let url: FlakeUrl = format!("{}#templates", registry).into();
+    let url: FlakeUrl = format!("{}#templates", args.registry).into();
 
     // Read flake-parts/templates and eval it to JSON, then Rust types
+    let term = console::Term::stdout();
+    term.write_line(format!("Loading registry {}...", args.registry).as_str())?;
     let templates = flake_template::fetch(&url).await?;
+    term.clear_last_lines(1)?;
+    println!("Loaded registry {}", args.registry);
+
     // TODO: avoid duplicates (aliases)
     let names = templates.keys().collect::<Vec<_>>();
+
+    println!("Welcome to flakreate! Let's create your flake template:");
 
     // Let the user pick the template
     let template = Select::new("Select a template", names)
@@ -58,7 +62,7 @@ async fn main() -> anyhow::Result<()> {
     std::env::set_current_dir(&path)?;
 
     // Run nix flake init
-    let template_url = format!("{}#{}", registry, template);
+    let template_url = format!("{}#{}", args.registry, template);
     println!("$ nix flake init -t {}", template_url);
     nixcmd()
         .await

@@ -10,6 +10,7 @@ version = "0.1.0"
 [dependencies]
 anyhow = "1.0.86"
 clap = { version = "4.3.14", features = ["derive"] }
+console = "0.15.8"
 inquire = "0.7.5"
 nix_rs = "0.3.3"
 serde = { version = "1.0.203", features = ["serde_derive"] }
