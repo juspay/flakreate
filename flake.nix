@@ -18,7 +18,7 @@
         inputs.rust-flake.flakeModules.default
         inputs.rust-flake.flakeModules.nixpkgs
       ];
-      perSystem = { self', pkgs, lib, ... }: {
+      perSystem = { config, self', pkgs, lib, ... }: {
         rust-project.crane.args = {
           buildInputs = lib.optionals pkgs.stdenv.isDarwin (
             with pkgs.darwin.apple_sdk.frameworks; [
@@ -38,7 +38,10 @@
         };
 
         devShells.default = pkgs.mkShell {
-          inputsFrom = [ self'.devShells.flakreate ];
+          inputsFrom = [
+            self'.devShells.flakreate
+            config.treefmt.build.devShell
+          ];
           packages = with pkgs; [
             cargo-watch
             nixd
