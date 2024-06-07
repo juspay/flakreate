@@ -35,7 +35,7 @@ impl FlakeTemplate {
 pub async fn fetch(url: &FlakeUrl) -> Result<BTreeMap<String, FlakeTemplate>, NixCmdError> {
     nix_rs::flake::eval::nix_eval_attr_json::<BTreeMap<String, FlakeTemplate>>(
         nixcmd().await,
-        url,
+        &url.with_attr("templates"),
         false,
     )
     .await

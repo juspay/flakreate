@@ -1,8 +1,9 @@
 use clap::Parser;
 use flakreate::{
-    flake_template::{self, fileop::FileOp},
+    flake_template::{self, fileop::FileOp, FlakeTemplate},
     nixcmd,
 };
+use glob::{Pattern, PatternError};
 use inquire::{Select, Text};
 use nix_rs::flake::url::FlakeUrl;
 
@@ -15,8 +16,62 @@ struct Args {
     verbose: bool,
 
     /// Flake template registry to use
+    ///
+    /// The flake attribute is treated as a glob pattern to select the
+    /// particular template (or subset of templates) to use.
     #[arg(short = 'r', default_value = "github:flake-parts/templates")]
-    registry: String,
+    registry: FlakeUrl,
+}
+
+struct FlakeTemplateRegistry {
+    pub flake_url: FlakeUrl,
+    pub filter: Option<Pattern>,
+}
+
+impl FlakeTemplateRegistry {
+    pub fn from_url(url: FlakeUrl) -> Result<Self, PatternError> {
+        let (base, attr) = url.split_attr();
+        Ok(FlakeTemplateRegistry {
+            flake_url: base,
+            filter: if attr.is_none() {
+                None
+            } else {
+                Some(Pattern::new(&attr.get_name())?)
+            },
+        })
+    }
+
+    pub async fn load_and_select_template(&self) -> anyhow::Result<(String, FlakeTemplate)> {
+        let term = console::Term::stdout();
+        term.write_line(format!("Loading registry {}...", self.flake_url).as_str())?;
+        let templates = flake_template::fetch(&self.flake_url).await?;
+        term.clear_last_lines(1)?;
+        println!("Loaded registry: {}", self.flake_url);
+        // TODO: avoid duplicates (aliases)
+        let names = templates.keys().collect::<Vec<_>>();
+        let filtered_names = names
+            .iter()
+            .filter(|name| {
+                self.filter
+                    .as_ref()
+                    .map_or(true, |filter| filter.matches(name))
+            })
+            .map(|name| name.to_string())
+            .collect::<Vec<_>>();
+        println!("Welcome to flakreate! Let's create your flake template:");
+        let template = if filtered_names.len() == 1 {
+            filtered_names[0].clone()
+        } else {
+            Select::new("Select a template", filtered_names)
+                .with_help_message("Choose a flake template to use")
+                .prompt()?
+        };
+        println!("Selected template: {}", template);
+        Ok((
+            template.to_string(),
+            templates.get(&template).unwrap().clone(),
+        ))
+    }
 }
 
 #[tokio::main]
@@ -26,33 +81,19 @@ async fn main() -> anyhow::Result<()> {
         println!("DEBUG {args:?}");
     }
 
-    let registry: FlakeUrl = format!("{}#templates", args.registry).into();
-
-    // Read flake-parts/templates and eval it to JSON, then Rust types
-    let term = console::Term::stdout();
-    term.write_line(format!("Loading registry {}...", registry).as_str())?;
-    let templates = flake_template::fetch(&registry).await?;
-    term.clear_last_lines(1)?;
-    println!("Loaded registry {}", registry);
-
-    // TODO: avoid duplicates (aliases)
-    let names = templates.keys().collect::<Vec<_>>();
-
-    println!("Welcome to flakreate! Let's create your flake template:");
-
-    // Let the user pick the template
-    let template = Select::new("Select a template", names)
-        .with_help_message("Choose a flake template to use")
-        .prompt()?;
+    let (name, template) = FlakeTemplateRegistry::from_url(args.registry.clone())?
+        .load_and_select_template()
+        .await?;
 
     let path = Text::new("Directory path")
-        .with_help_message("Path to create the flake in")
+        .with_help_message("Directory to create the project template in")
         .with_placeholder("Filepath")
+        // TODO: This should use a sensible name
         .with_default("./tmp")
         .prompt()?;
 
     // Prompt for template parameters
-    let param_values = templates.get(template).unwrap().prompt_replacements()?;
+    let param_values = template.prompt_replacements()?;
 
     // println!("Res: {:#?}", param_values);
 
@@ -62,7 +103,7 @@ async fn main() -> anyhow::Result<()> {
     std::env::set_current_dir(&path)?;
 
     // Run nix flake init
-    let template_url = registry.with_attr(template);
+    let template_url = args.registry.with_attr(&name);
     println!("$ nix flake init -t {}", template_url);
     nixcmd()
         .await
