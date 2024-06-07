@@ -19,7 +19,7 @@ struct Args {
     ///
     /// The flake attribute is treated as a glob pattern to select the
     /// particular template (or subset of templates) to use.
-    #[arg(short = 'r', default_value = "github:flake-parts/templates")]
+    #[arg(default_value = "github:flake-parts/templates")]
     registry: FlakeUrl,
 }
 
