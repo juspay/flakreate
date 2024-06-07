@@ -2,7 +2,7 @@
 
 WIP
 
-https://github.com/flake-parts/templates/pull/5
+https://github.com/flake-parts/templates/pull/7
 
 ## Goals
 
