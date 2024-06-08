@@ -1,8 +1,7 @@
 # flakreate
 
-WIP
-
-https://github.com/flake-parts/templates/pull/7
+> [!WARNING] 
+> This program is still in development. See https://github.com/flake-parts/templates/pull/7
 
 ## Goals
 
