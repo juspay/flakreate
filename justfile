@@ -5,9 +5,13 @@ default:
 fmt:
     treefmt
 
-# Run 'cargo run' on the project
+# Run cargo clippy
+clippy:
+    cargo clippy
+
+# Run 'cargo run' on the project (e.g;: `j run -- ~/code/templates#\*home\*`)
 run *ARGS:
-    rm -rf ./tmp && cargo run -- {{ARGS}}
+    rm -rf ./tmp && cargo run -- {{ARGS}} && lsd --tree ./tmp
 
 # Run 'cargo watch' to run the project (auto-recompiles)
 watch *ARGS:
