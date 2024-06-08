@@ -9,6 +9,8 @@ pub enum FileOp {
     ContentReplace(PathBuf, String, String),
     /// Rename the file to the given name
     FileRename(PathBuf, String),
+    /// Delete the file or directory
+    PathDelete(PathBuf),
 }
 
 impl FileOp {
@@ -42,6 +44,7 @@ impl FileOp {
 
     pub async fn apply(ops: &[Self]) -> anyhow::Result<()> {
         // TODO: Refactor the LLM generated code below
+        // TODO: Append thesae paths to base dir
         for op in ops {
             match op {
                 FileOp::ContentReplace(file, from, to) => {
@@ -53,6 +56,11 @@ impl FileOp {
                 FileOp::FileRename(file, new_name) => {
                     println!("  RENAME: {} -> {}", file.display(), new_name);
                     tokio::fs::rename(file, new_name).await?;
+                }
+                FileOp::PathDelete(path) => {
+                    println!("  DELETE: {}", path.display());
+                    // FIXME: Careful not to delete anything outside of base dir!
+                    tokio::fs::remove_dir_all(path).await?;
                 }
             }
         }
