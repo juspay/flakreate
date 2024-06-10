@@ -1,10 +1,12 @@
+use std::path::PathBuf;
+
 use clap::Parser;
 use flakreate::{
     flake_template::{self, fileop::FileOp, FlakeTemplate},
     nixcmd,
 };
 use glob::{Pattern, PatternError};
-use inquire::{Select, Text};
+use inquire::Select;
 use nix_rs::flake::url::FlakeUrl;
 
 #[derive(Parser, Debug)]
@@ -19,8 +21,12 @@ struct Args {
     ///
     /// The flake attribute is treated as a glob pattern to select the
     /// particular template (or subset of templates) to use.
-    #[arg(default_value = "github:flake-parts/templates")]
+    #[arg(short = 't', default_value = "github:flake-parts/templates")]
     registry: FlakeUrl,
+
+    /// Where to create the template
+    #[arg()]
+    path: PathBuf,
 }
 
 struct FlakeTemplateRegistry {
@@ -58,7 +64,6 @@ impl FlakeTemplateRegistry {
             })
             .map(|name| name.to_string())
             .collect::<Vec<_>>();
-        println!("Welcome to flakreate! Let's create your flake template:");
         let template = if filtered_names.len() == 1 {
             filtered_names[0].clone()
         } else {
@@ -80,20 +85,18 @@ async fn main() -> anyhow::Result<()> {
     if args.verbose {
         println!("DEBUG {args:?}");
     }
-
+    println!(
+        "Welcome to flakreate! Let's create your flake template at {:?}:",
+        args.path
+    );
     let (name, template) = FlakeTemplateRegistry::from_url(args.registry.clone())?
         .load_and_select_template()
         .await?;
 
-    let path = Text::new("Directory path")
-        .with_help_message("Directory to create the project template in")
-        .with_placeholder("Filepath")
-        // TODO: This should use a sensible name
-        .with_default("./tmp")
-        .prompt()?;
-
     // Prompt for template parameters
     let param_values = template.prompt_replacements()?;
+
+    let path = args.path.to_string_lossy();
 
     // Create the flake templatge
     let template_url = args.registry.with_attr(&name);
@@ -104,7 +107,7 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     // Do the actual replacement
-    std::env::set_current_dir(&path)?;
+    std::env::set_current_dir(args.path)?;
     for replace in param_values {
         FileOp::apply(&replace).await?;
     }
