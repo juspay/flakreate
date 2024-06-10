@@ -19,14 +19,14 @@ pub struct FlakeTemplate {
     path: String,
     #[serde(rename = "welcomeText")]
     welcome_text: Option<String>,
-    params: BTreeMap<String, Param>,
+    params: Vec<Param>,
 }
 
 impl FlakeTemplate {
-    pub fn prompt_replacements(&self) -> anyhow::Result<BTreeMap<String, Vec<FileOp>>> {
+    pub fn prompt_replacements(&self) -> anyhow::Result<Vec<Vec<FileOp>>> {
         self.params
             .iter()
-            .map(|(name, param)| Ok((name.clone(), param.prompt_value()?)))
+            .map(|param| Ok(param.prompt_value()?))
             .collect()
     }
 }

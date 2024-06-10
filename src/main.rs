@@ -111,8 +111,8 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     // Do the actual replacement
-    for replace in param_values.values() {
-        FileOp::apply(replace).await?;
+    for replace in param_values {
+        FileOp::apply(&replace).await?;
     }
     Ok(())
 }
