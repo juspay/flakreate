@@ -95,22 +95,16 @@ async fn main() -> anyhow::Result<()> {
     // Prompt for template parameters
     let param_values = template.prompt_replacements()?;
 
-    // println!("Res: {:#?}", param_values);
-
-    // Create directory path
-    tokio::fs::create_dir_all(&path).await?;
-    // change working directory to 'path'
-    std::env::set_current_dir(&path)?;
-
-    // Run nix flake init
+    // Create the flake templatge
     let template_url = args.registry.with_attr(&name);
-    println!("$ nix flake init -t {}", template_url);
+    println!("$ nix flake new {} -t {}", path, template_url);
     nixcmd()
         .await
-        .run_with_args(&["flake", "init", "-t", &template_url.0])
+        .run_with_args(&["flake", "new", &path, "-t", &template_url.0])
         .await?;
 
     // Do the actual replacement
+    std::env::set_current_dir(&path)?;
     for replace in param_values {
         FileOp::apply(&replace).await?;
     }
