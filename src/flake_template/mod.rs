@@ -26,7 +26,7 @@ impl FlakeTemplate {
     pub fn prompt_replacements(&self) -> anyhow::Result<Vec<Vec<FileOp>>> {
         self.params
             .iter()
-            .map(|param| Ok(param.prompt_value()?))
+            .map(|param| param.prompt_value())
             .collect()
     }
 }
