@@ -47,35 +47,30 @@ impl FlakeTemplateRegistry {
         })
     }
 
-    pub async fn load_and_select_template(&self) -> anyhow::Result<(String, FlakeTemplate)> {
+    pub async fn load_and_select_template(&self) -> anyhow::Result<FlakeTemplate> {
         let term = console::Term::stdout();
         term.write_line(format!("Loading registry {}...", self.flake_url).as_str())?;
         let templates = flake_template::fetch(&self.flake_url).await?;
         term.clear_last_lines(1)?;
         println!("Loaded registry: {}", self.flake_url);
         // TODO: avoid duplicates (aliases)
-        let names = templates.keys().collect::<Vec<_>>();
-        let filtered_names = names
+        let filtered_templates = templates
             .iter()
-            .filter(|name| {
+            .filter(|template| {
                 self.filter
                     .as_ref()
-                    .map_or(true, |filter| filter.matches(name))
+                    .map_or(true, |filter| filter.matches(&template.name))
             })
-            .map(|name| name.to_string())
             .collect::<Vec<_>>();
-        let template = if filtered_names.len() == 1 {
-            filtered_names[0].clone()
+        let template = if filtered_templates.len() == 1 {
+            filtered_templates[0]
         } else {
-            Select::new("Select a template", filtered_names)
+            Select::new("Select a template", filtered_templates)
                 .with_help_message("Choose a flake template to use")
                 .prompt()?
         };
         println!("Selected template: {}", template);
-        Ok((
-            template.to_string(),
-            templates.get(&template).unwrap().clone(),
-        ))
+        Ok(template.clone())
     }
 }
 
@@ -89,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
         "Welcome to flakreate! Let's create your flake template at {:?}:",
         args.path
     );
-    let (name, template) = FlakeTemplateRegistry::from_url(args.registry.clone())?
+    let template = FlakeTemplateRegistry::from_url(args.registry.clone())?
         .load_and_select_template()
         .await?;
 
@@ -99,7 +94,7 @@ async fn main() -> anyhow::Result<()> {
     let path = args.path.to_string_lossy();
 
     // Create the flake templatge
-    let template_url = args.registry.with_attr(&name);
+    let template_url = args.registry.with_attr(&template.name);
     println!("$ nix flake new {} -t {}", path, template_url);
     nixcmd()
         .await

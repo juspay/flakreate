@@ -1,4 +1,8 @@
-use std::collections::BTreeMap;
+use core::fmt;
+use std::{
+    collections::BTreeMap,
+    fmt::{Display, Formatter},
+};
 
 use fileop::FileOp;
 use nix_rs::{command::NixCmdError, flake::url::FlakeUrl};
@@ -15,11 +19,23 @@ pub mod param;
 /// Defined per [this definition](https://nix.dev/manual/nix/2.22/command-ref/new-cli/nix3-flake-init#template-definitions) in the flake.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FlakeTemplate {
-    description: String,
-    path: String,
+    #[serde(skip_deserializing)]
+    pub name: String,
+
+    pub description: String,
+
+    pub path: String,
+
     #[serde(rename = "welcomeText")]
-    welcome_text: Option<String>,
-    params: Vec<Param>,
+    pub welcome_text: Option<String>,
+
+    pub params: Vec<Param>,
+}
+
+impl Display for FlakeTemplate {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name)
+    }
 }
 
 impl FlakeTemplate {
@@ -32,11 +48,16 @@ impl FlakeTemplate {
 }
 
 /// Fetch the templates defined in a flake
-pub async fn fetch(url: &FlakeUrl) -> Result<BTreeMap<String, FlakeTemplate>, NixCmdError> {
-    nix_rs::flake::eval::nix_eval_attr_json::<BTreeMap<String, FlakeTemplate>>(
+pub async fn fetch(url: &FlakeUrl) -> Result<Vec<FlakeTemplate>, NixCmdError> {
+    let mut templates = nix_rs::flake::eval::nix_eval_attr_json::<BTreeMap<String, FlakeTemplate>>(
         nixcmd().await,
         &url.with_attr("templates"),
         false,
     )
-    .await
+    .await?;
+    // Set 'name' field in each template
+    for (name, template) in templates.iter_mut() {
+        template.name.clone_from(name);
+    }
+    Ok(templates.values().cloned().collect())
 }
