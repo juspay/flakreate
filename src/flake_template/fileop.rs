@@ -50,15 +50,15 @@ impl FileOp {
                 FileOp::ContentReplace(file, from, to) => {
                     let content = tokio::fs::read_to_string(file).await?;
                     let content = content.replace(from, to);
-                    println!("  REPLACE: {} : {} -> {}", file.display(), from, to);
+                    println!("replace: {} : {} -> {}", file.display(), from, to);
                     tokio::fs::write(file, content).await?;
                 }
                 FileOp::FileRename(file, new_name) => {
-                    println!("  RENAME: {} -> {}", file.display(), new_name);
+                    println!("rename: {} -> {}", file.display(), new_name);
                     tokio::fs::rename(file, new_name).await?;
                 }
                 FileOp::PathDelete(path) => {
-                    println!("  DELETE: {}", path.display());
+                    println!("delete: {}", path.display());
                     // FIXME: Careful not to delete anything outside of base dir!
                     tokio::fs::remove_dir_all(path).await?;
                 }

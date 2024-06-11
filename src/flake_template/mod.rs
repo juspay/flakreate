@@ -1,3 +1,4 @@
+use colored::Colorize;
 use core::fmt;
 use std::{
     collections::BTreeMap,
@@ -22,6 +23,9 @@ pub struct FlakeTemplate {
     #[serde(skip_deserializing)]
     pub name: String,
 
+    #[serde(default)]
+    pub tags: Vec<String>,
+
     pub description: String,
 
     pub path: String,
@@ -34,7 +38,11 @@ pub struct FlakeTemplate {
 
 impl Display for FlakeTemplate {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.name)
+        if self.tags.is_empty() {
+            write!(f, "{}", self.name)
+        } else {
+            write!(f, "{:<20} {}", self.name, self.tags.join(", ").dimmed())
+        }
     }
 }
 
